@@ -134,7 +134,7 @@ contract StabilityHookTest is Test, Fixtures {
         address flags = address(
             uint160(
                 Hooks.BEFORE_SWAP_FLAG | Hooks.AFTER_SWAP_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG
-                    | Hooks.AFTER_REMOVE_LIQUIDITY_FLAG
+                    | Hooks.AFTER_REMOVE_LIQUIDITY_FLAG | Hooks.AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG
             ) ^ (0x4444 << 144) // Namespace the hook to avoid collisions
         );
         bytes memory constructorArgs = abi.encode(manager, threeCRV69); //Add all the necessary constructor arguments from the hook
@@ -223,10 +223,6 @@ contract StabilityHookTest is Test, Fixtures {
     }
 
     function testRemoveLiquidityHooks() public {
-        //log token balances before adding liquidity
-        //uint256 token0BalanceBefore = ERC20(Currency.unwrap(currency0)).balanceOf(address(this));
-        //uint256 token1BalanceBefore = ERC20(Currency.unwrap(currency1)).balanceOf(address(this));
-
         uint256 _3crvTokenId = 2;
         bytes memory HOOK_ARGS = abi.encode(_3crvTokenId);
 
@@ -246,18 +242,9 @@ contract StabilityHookTest is Test, Fixtures {
 
         console.log("its working");
         
-        //log token balances after removing liquidity
-        //uint256 token0BalanceAfter = ERC20(Currency.unwrap(currency0)).balanceOf(address(this));
-        //uint256 token1BalanceAfter = ERC20(Currency.unwrap(currency1)).balanceOf(address(this));
-        
-        //console log both balances 
-        //console.log("token0 balance after  removing liquidity", token0BalanceAfter);
-        //console.log("token0 balance before removing liquidity", token0BalanceBefore);
-        //console.log("token1 balance after  removing liquidity", token1BalanceAfter);
-        //console.log("token1 balance before removing liquidity", token1BalanceBefore);
-
-        //console log the difference
-        //console.log("token0 balance difference", token0BalanceAfter - token0BalanceBefore);
-        //console.log("token1 balance difference", token1BalanceAfter - token1BalanceBefore);
+        uint256 threeCRV69Balance = threeCRV69.balanceOf(alice);
+        console.log("3crv69      balance", threeCRV69Balance);
+        uint256 stableTokenBalance = stableToken.balanceOf(alice);
+        console.log("stableToken balance", stableTokenBalance);
     }
 }
