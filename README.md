@@ -1,6 +1,7 @@
 # UNIPEG - Decentralized Stablecoin on Uniswap V4
 
-![UniPeg Logo](https://via.placeholder.com/150) <!-- Replace with actual logo URL -->
+![UniPeg Logo](![image](https://github.com/user-attachments/assets/bb2ad1b3-2f2a-4841-a44f-e9a6f2d8e1a2)
+) <!-- Replace with actual logo URL -->
 
 **$UNIPEG** is a cutting-edge decentralized stablecoin built on Uniswap V4 using Solidity and Foundry. The UNIPEG token aims to maintain a $1 peg through a dual-pool hook system: a **Stability Pool Hook** for low-slippage stablecoin trading and fee generation, and then **Leverage Pool Hooks** for overcollateralized lending against volatile assets like ETH.  
 Implementing Uniswap V4 hooks with a stablecoin offers stability, yield generation, and lending into a single robust ecosystem.
