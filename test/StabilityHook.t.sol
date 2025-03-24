@@ -78,7 +78,11 @@ contract StabilityHookTest is Test, Fixtures {
         vm.label(POOL_MANAGER_ADDRESS, "PoolManager");
         vm.label(POSITION_MANAGER_ADDRESS, "PositionManager");
         vm.label(alice, "Alice");
+        console.log("alice", alice);
         vm.label(bob, "Bob");
+        console.log("bob", bob);
+        vm.label(address(this), "this test contract");
+        //console.log("this", address(this));
 
         // Use the deployed PoolManager
         manager = IPoolManager(POOL_MANAGER_ADDRESS);
@@ -96,11 +100,11 @@ contract StabilityHookTest is Test, Fixtures {
         feeController = makeAddr("feeController");
         actionsRouter = new ActionsRouter(manager);
 
-        deal(USDT, alice, 1000e6);
+        //deal(USDT, alice, 1000e6);
         vm.label(USDT, "USDT");
-        deal(USDC, alice, 1000e6);
+        //deal(USDC, alice, 1000e6);
         vm.label(USDC, "USDC");
-        deal(DAI, alice,  1000e18);
+        //deal(DAI, alice,  1000e18);
         vm.label(DAI, "DAI");
 
         threeCRV69 = new ThreeCRV69(
@@ -108,6 +112,7 @@ contract StabilityHookTest is Test, Fixtures {
             USDC,
             DAI
         );
+        vm.label(address(threeCRV69), "3CRV");
 
         console.log("usdt balance", usdt.balanceOf(alice));
         console.log("usdc balance", usdc.balanceOf(alice));
@@ -134,6 +139,7 @@ contract StabilityHookTest is Test, Fixtures {
         bytes memory constructorArgs = abi.encode(manager, threeCRV69); //Add all the necessary constructor arguments from the hook
         deployCodeTo("StabilityHook.sol:StabilityHook", constructorArgs, flags);
         hook = StabilityHook(flags);
+        vm.label(address(hook), "hook");
 
         // Create the pool key
         key = PoolKey(currency0, currency1, 3000, 60, IHooks(hook));
@@ -161,10 +167,11 @@ contract StabilityHookTest is Test, Fixtures {
         console.log("amount1Desired ", amount1Desired + 2);
 
         deal(address(stableToken), alice, amount0Desired + 1);
-        deal(DAI, alice, amount1Desired + 1); //dai to mint within the hook with 3crv69
+        deal(DAI, alice, amount1Desired + 10); //dai to mint within the hook with 3crv69
+        console.log("dai balance   ", dai.balanceOf(alice));
 
         uint256 _3crvTokenId = 2;
-        bytes memory HOOK_ARGS = abi.encode(_3crvTokenId);
+        bytes memory HOOK_ARGS = abi.encode(_3crvTokenId, alice);
 
         //mint liquidity
         vm.startPrank(alice);        
@@ -179,6 +186,7 @@ contract StabilityHookTest is Test, Fixtures {
             ERC20(Currency.unwrap(currency0)).approve(address(swapRouter), type(uint256).max);
             ERC20(Currency.unwrap(currency1)).approve(address(swapRouter), type(uint256).max);
             
+            dai.approve(address(hook), amount1Desired + 10);
             console.log("balance of currency0", ERC20(Currency.unwrap(currency0)).balanceOf(alice));
             console.log("balance of currency1", ERC20(Currency.unwrap(currency1)).balanceOf(alice));
 
