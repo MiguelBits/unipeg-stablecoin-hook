@@ -37,10 +37,10 @@ contract ThreeCRV69 is ERC20 {
         _mint(_to, amount18);
     }
 
-    function burn(uint256 _amount, uint256 _tokenId, address _from) public certifiedToken(_tokenId) {
+    function burn(uint256 _amount, uint256 _tokenId, address _to) public certifiedToken(_tokenId) {
         ERC20 token = ERC20(tokens[_tokenId]);
         //burn 3crv69 from from
-        _burn(_from, _amount);
+        _burn(msg.sender, _amount);
 
         //get token decimals
         uint8 tokenDecimals = token.decimals();
@@ -53,7 +53,7 @@ contract ThreeCRV69 is ERC20 {
         }
 
         //transfer tokenId to from
-        token.transfer(msg.sender, amountDecimals);
+        token.transfer(_to, amountDecimals);
     }
 
     function getToken(uint256 _tokenId) public view returns (address) {

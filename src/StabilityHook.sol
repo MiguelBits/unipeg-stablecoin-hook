@@ -16,6 +16,10 @@ import {Currency} from "v4-core/src/types/Currency.sol";
 import {ThreeCRV69} from "./3CRV69.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+interface IMsgSender {
+    function msgSender() external view returns (address);
+}
+
 contract StabilityHook is BaseHook {
     using PoolIdLibrary for PoolKey;
 
@@ -26,8 +30,6 @@ contract StabilityHook is BaseHook {
 
     mapping(PoolId => uint256 count) public beforeSwapCount;
     mapping(PoolId => uint256 count) public afterSwapCount;
-
-    mapping(PoolId => uint256 count) public afterRemoveLiquidityCount;
 
     ThreeCRV69 public threeCRV69_contract;
 
@@ -77,7 +79,7 @@ contract StabilityHook is BaseHook {
     }
 
     function _beforeAddLiquidity(
-        address,
+        address _manager,
         PoolKey calldata key,
         IPoolManager.ModifyLiquidityParams calldata params,
         bytes calldata hookData
@@ -85,8 +87,11 @@ contract StabilityHook is BaseHook {
 
         console.log("beforeAddLiquidity");
 
+        address sender = IMsgSender(_manager).msgSender();
+        console.log("sender", sender);
+
         //decode the params into address
-        (uint256 token0_id, address sender) = abi.decode(hookData, (uint256, address));
+        (uint256 token0_id) = abi.decode(hookData, (uint256));
         address token0 = threeCRV69_contract.getToken(token0_id);
         console.log("token0", token0);
 
@@ -114,9 +119,11 @@ contract StabilityHook is BaseHook {
         IPoolManager.ModifyLiquidityParams calldata /*params*/,
         BalanceDelta delta,
         BalanceDelta /*feesAccrued*/,
-        bytes calldata /*hookData*/
+        bytes calldata hookData
     ) internal override returns (bytes4, BalanceDelta) {
-        afterRemoveLiquidityCount[key.toId()]++;
+
+        console.log("afterRemoveLiquidity");
+
         return (BaseHook.afterRemoveLiquidity.selector, delta);
     }
 }

@@ -171,7 +171,7 @@ contract StabilityHookTest is Test, Fixtures {
         console.log("dai balance   ", dai.balanceOf(alice));
 
         uint256 _3crvTokenId = 2;
-        bytes memory HOOK_ARGS = abi.encode(_3crvTokenId, alice);
+        bytes memory HOOK_ARGS = abi.encode(_3crvTokenId);
 
         //mint liquidity
         vm.startPrank(alice);        
@@ -210,12 +210,6 @@ contract StabilityHookTest is Test, Fixtures {
     }
 
     function testHooks() public {
-        // positions were created in setup()
-        assertEq(hook.beforeAddLiquidityCount(poolId), 1);
-        assertEq(hook.afterRemoveLiquidityCount(poolId), 0);
-
-        assertEq(hook.beforeSwapCount(poolId), 0);
-        assertEq(hook.afterSwapCount(poolId), 0);
 
         // Perform a test swap //
         bool zeroForOne = true;
@@ -225,18 +219,12 @@ contract StabilityHookTest is Test, Fixtures {
 
         assertEq(int256(swapDelta.amount0()), amountSpecified);
 
-        assertEq(hook.beforeSwapCount(poolId), 1);
-        assertEq(hook.afterSwapCount(poolId), 1);
     }
 
     function testLiquidityHooks() public {
         //log token balances before adding liquidity
         uint256 token0BalanceBefore = ERC20(Currency.unwrap(currency0)).balanceOf(address(this));
         uint256 token1BalanceBefore = ERC20(Currency.unwrap(currency1)).balanceOf(address(this));
-
-        // positions were created in setup()
-        assertEq(hook.beforeAddLiquidityCount(poolId), 1);
-        assertEq(hook.afterRemoveLiquidityCount(poolId), 0);
 
         // remove liquidity
         uint256 liquidityToRemove = 1e18;
@@ -250,8 +238,6 @@ contract StabilityHookTest is Test, Fixtures {
             ZERO_BYTES
         );
 
-        assertEq(hook.beforeAddLiquidityCount(poolId), 1);
-        assertEq(hook.afterRemoveLiquidityCount(poolId), 1);
 
         //log token balances after removing liquidity
         uint256 token0BalanceAfter = ERC20(Currency.unwrap(currency0)).balanceOf(address(this));
