@@ -12,6 +12,7 @@ import {BeforeSwapDelta, BeforeSwapDeltaLibrary} from "v4-core/src/types/BeforeS
 import {LiquidityAmounts} from "v4-core/test/utils/LiquidityAmounts.sol";
 import {TickMath} from "v4-core/src/libraries/TickMath.sol";
 import {Currency} from "v4-core/src/types/Currency.sol";
+import {BalanceDelta, toBalanceDelta} from "v4-core/src/types/BalanceDelta.sol";
 
 import {ThreeCRV69} from "./3CRV69.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -114,16 +115,38 @@ contract StabilityHook is BaseHook {
     }
 
     function _afterRemoveLiquidity(
-        address,
+        address _manager,
         PoolKey calldata key,
         IPoolManager.ModifyLiquidityParams calldata /*params*/,
         BalanceDelta delta,
         BalanceDelta /*feesAccrued*/,
         bytes calldata hookData
     ) internal override returns (bytes4, BalanceDelta) {
-
         console.log("afterRemoveLiquidity");
 
-        return (BaseHook.afterRemoveLiquidity.selector, delta);
+        // Encode operation parameters
+        address sender = IMsgSender(_manager).msgSender();
+        
+        // Convert delta.amount0() to uint256
+        uint256 amount0_uint = uint256(int256(delta.amount0()));
+        
+        // Decode which original stablecoin to return
+        (uint256 token0_id) = abi.decode(hookData, (uint256));
+
+        //Pool accounting
+        poolManager.take(key.currency0, address(this), amount0_uint);
+
+        //Burn 3CRV69 tokens to return original stablecoin to sender
+        threeCRV69_contract.burn(amount0_uint, token0_id, sender);
+        //IERC20 token0Contract = IERC20(threeCRV69_contract.getToken(token0_id));
+        //console.log("alice balance", token0Contract.balanceOf(0xBf0b5A4099F0bf6c8bC4252eBeC548Bae95602Ea));
+
+        //New delta //toBalanceDelta
+        int128 amount0 = 0;
+        int128 amount1 = 0;
+        BalanceDelta hookDelta = toBalanceDelta(amount0, amount1);
+
+        return (BaseHook.afterRemoveLiquidity.selector, hookDelta);
     }
+
 }

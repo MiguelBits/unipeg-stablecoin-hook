@@ -69,6 +69,7 @@ contract StabilityHookTest is Test, Fixtures {
 
     address alice = makeAddr("Alice");
     address bob = makeAddr("Bob");
+    uint128 liquidityAmount;
 
     function setUp() public {
 
@@ -155,7 +156,7 @@ contract StabilityHookTest is Test, Fixtures {
         uint256 amount0Desired = 100e18;
         uint256 amount1Desired = 100e18;
 
-        uint128 liquidityAmount = LiquidityAmounts.getLiquidityForAmounts(
+        liquidityAmount = LiquidityAmounts.getLiquidityForAmounts(
             SQRT_PRICE_1_1,
             TickMath.getSqrtPriceAtTick(tickLower),
             TickMath.getSqrtPriceAtTick(tickUpper),
@@ -221,27 +222,33 @@ contract StabilityHookTest is Test, Fixtures {
 
     }
 
-    function testLiquidityHooks() public {
+    function testRemoveLiquidityHooks() public {
         //log token balances before adding liquidity
-        uint256 token0BalanceBefore = ERC20(Currency.unwrap(currency0)).balanceOf(address(this));
-        uint256 token1BalanceBefore = ERC20(Currency.unwrap(currency1)).balanceOf(address(this));
+        //uint256 token0BalanceBefore = ERC20(Currency.unwrap(currency0)).balanceOf(address(this));
+        //uint256 token1BalanceBefore = ERC20(Currency.unwrap(currency1)).balanceOf(address(this));
 
+        uint256 _3crvTokenId = 2;
+        bytes memory HOOK_ARGS = abi.encode(_3crvTokenId);
+
+        console.log("liquidityAmount", liquidityAmount);
         // remove liquidity
-        uint256 liquidityToRemove = 1e18;
-        posm.decreaseLiquidity(
-            tokenId,
-            liquidityToRemove,
-            MAX_SLIPPAGE_REMOVE_LIQUIDITY,
-            MAX_SLIPPAGE_REMOVE_LIQUIDITY,
-            address(this),
-            block.timestamp,
-            ZERO_BYTES
-        );
+        vm.startPrank(alice);
+            posm.decreaseLiquidity(
+                tokenId,
+                liquidityAmount,
+                MAX_SLIPPAGE_REMOVE_LIQUIDITY,
+                MAX_SLIPPAGE_REMOVE_LIQUIDITY,
+                alice,
+                block.timestamp,
+                HOOK_ARGS
+            );
+        vm.stopPrank();
 
-
+        console.log("its working");
+        
         //log token balances after removing liquidity
-        uint256 token0BalanceAfter = ERC20(Currency.unwrap(currency0)).balanceOf(address(this));
-        uint256 token1BalanceAfter = ERC20(Currency.unwrap(currency1)).balanceOf(address(this));
+        //uint256 token0BalanceAfter = ERC20(Currency.unwrap(currency0)).balanceOf(address(this));
+        //uint256 token1BalanceAfter = ERC20(Currency.unwrap(currency1)).balanceOf(address(this));
         
         //console log both balances 
         //console.log("token0 balance after  removing liquidity", token0BalanceAfter);
@@ -250,7 +257,7 @@ contract StabilityHookTest is Test, Fixtures {
         //console.log("token1 balance before removing liquidity", token1BalanceBefore);
 
         //console log the difference
-        console.log("token0 balance difference", token0BalanceAfter - token0BalanceBefore);
-        console.log("token1 balance difference", token1BalanceAfter - token1BalanceBefore);
+        //console.log("token0 balance difference", token0BalanceAfter - token0BalanceBefore);
+        //console.log("token1 balance difference", token1BalanceAfter - token1BalanceBefore);
     }
 }
