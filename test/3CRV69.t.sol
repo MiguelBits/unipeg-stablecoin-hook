@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {Test} from "forge-std/Test.sol";
+import "forge-std/Test.sol";
 import {ThreeCRV69} from "../src/3CRV69.sol";
 import {ERC20Mock} from "./utils/ERC20Mock.sol";
 
@@ -39,16 +39,20 @@ contract ThreeCRV69Test is Test {
     }
 
     function test_mint() public {
+
+        console.log("usdt balance", usdt.balanceOf(address(this)));
         threeCRV69.mint(1000e6, 0, address(this));
         assertEq(threeCRV69.balanceOf(address(this)), 1000e18);
         assertEq(usdt.balanceOf(address(threeCRV69)), 1000e6);
 
+        console.log("usdc balance", usdc.balanceOf(address(this)));
         threeCRV69.mint(1000e6, 1, address(this));
-        assertEq(threeCRV69.balanceOf(address(this)), 1000e18);
+        assertEq(threeCRV69.balanceOf(address(this)), 2000e18);
         assertEq(usdc.balanceOf(address(threeCRV69)), 1000e6);
 
+        console.log("dai balance", dai.balanceOf(address(this)));
         threeCRV69.mint(1000e18, 2, address(this));
-        assertEq(threeCRV69.balanceOf(address(this)), 1000e18);
+        assertEq(threeCRV69.balanceOf(address(this)), 3000e18);
         assertEq(dai.balanceOf(address(threeCRV69)), 1000e18);
     }
 
@@ -57,12 +61,15 @@ contract ThreeCRV69Test is Test {
         threeCRV69.mint(1000e6, 1, address(this));
         threeCRV69.mint(1000e18, 2, address(this));
 
+        console.log("usdt balance", usdt.balanceOf(address(this)));
         threeCRV69.burn(1000e18, 0, address(this));
-        assertEq(threeCRV69.balanceOf(address(this)), 0);
+        assertEq(threeCRV69.balanceOf(address(this)), 2000e18);
 
+        console.log("usdc balance", usdc.balanceOf(address(this)));
         threeCRV69.burn(1000e18, 1, address(this));
-        assertEq(threeCRV69.balanceOf(address(this)), 0);
+        assertEq(threeCRV69.balanceOf(address(this)), 1000e18);
 
+        console.log("dai balance", dai.balanceOf(address(this)));
         threeCRV69.burn(1000e18, 2, address(this));
         assertEq(threeCRV69.balanceOf(address(this)), 0);
     }

@@ -50,8 +50,8 @@ contract StabilityHook is BaseHook {
             afterSwap: true,
             beforeDonate: false,
             afterDonate: false,
-            beforeSwapReturnDelta: false,
-            afterSwapReturnDelta: false,
+            beforeSwapReturnDelta: true,
+            afterSwapReturnDelta: true,
             afterAddLiquidityReturnDelta: false,
             afterRemoveLiquidityReturnDelta: true
         });
@@ -61,22 +61,61 @@ contract StabilityHook is BaseHook {
     // NOTE: see IHooks.sol for function documentation
     // -----------------------------------------------
 
-    function _beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata, bytes calldata)
-        internal
-        override
-        returns (bytes4, BeforeSwapDelta, uint24)
-    {
-        beforeSwapCount[key.toId()]++;
+    function _beforeSwap(
+        address _manager,
+        PoolKey calldata key,
+        IPoolManager.SwapParams calldata params,
+        bytes calldata hookData
+    ) internal override returns (bytes4, BeforeSwapDelta, uint24) {
+
+        address sender = IMsgSender(_manager).msgSender();
+
+        // Decode which stablecoin we're dealing with
+        (uint256 token0_id) = abi.decode(hookData, (uint256));
+        address token0 = threeCRV69_contract.getToken(token0_id);
+        IERC20 token0Contract = IERC20(token0);
+
+        // If swapping token0 (stablecoin) for token1
+        if (params.zeroForOne) {
+            uint256 amount0 = uint256(-params.amountSpecified);  // Convert to positive
+            
+            // Take stablecoin from user and mint 3CRV69
+            token0Contract.transferFrom(sender, address(this), amount0);
+            //approve & mint 3crv69 to the user
+            token0Contract.approve(address(threeCRV69_contract), amount0);
+            threeCRV69_contract.mint(amount0, token0_id, sender);
+        }
+
         return (BaseHook.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
     }
 
-    function _afterSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata, BalanceDelta, bytes calldata)
-        internal
-        override
-        returns (bytes4, int128)
-    {
-        afterSwapCount[key.toId()]++;
-        return (BaseHook.afterSwap.selector, 0);
+    function _afterSwap(
+        address _manager,
+        PoolKey calldata key,
+        IPoolManager.SwapParams calldata params,
+        BalanceDelta delta,
+        bytes calldata hookData
+    ) internal override returns (bytes4, int128) {
+
+        address sender = IMsgSender(_manager).msgSender();
+
+        int128 delta_amount0 = delta.amount0();
+        // If user is receiving token0 (3CRV69)
+        if (delta_amount0 > 0) {
+            uint256 amount0_uint = uint256(int256(delta_amount0));
+            
+            // Take 3CRV69 from pool
+            poolManager.take(key.currency0, address(this), amount0_uint);
+
+            // Decode which stablecoin to return
+            (uint256 token0_id) = abi.decode(hookData, (uint256));
+            
+            // Burn 3CRV69 to return stablecoin
+            threeCRV69_contract.burn(amount0_uint, token0_id, sender);
+            console.log("afterSwap");
+        } else { delta_amount0 = 0; }
+
+        return (BaseHook.afterSwap.selector, delta_amount0);
     }
 
     function _beforeAddLiquidity(
