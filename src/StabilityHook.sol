@@ -90,17 +90,19 @@ contract StabilityHook is BaseHook {
     }
 
     function _afterSwap(
-        address sender,
+        address _manager,
         PoolKey calldata key,
         IPoolManager.SwapParams calldata params,
         BalanceDelta delta,
         bytes calldata hookData
     ) internal override returns (bytes4, int128) {
-        console.log("afterSwap");
 
-        // If receiving token0 (3CRV69)
-        if (delta.amount0() > 0) {
-            uint256 amount0_uint = uint256(int256(delta.amount0()));
+        address sender = IMsgSender(_manager).msgSender();
+
+        int128 delta_amount0 = delta.amount0();
+        // If user is receiving token0 (3CRV69)
+        if (delta_amount0 > 0) {
+            uint256 amount0_uint = uint256(int256(delta_amount0));
             
             // Take 3CRV69 from pool
             poolManager.take(key.currency0, address(this), amount0_uint);
@@ -110,10 +112,10 @@ contract StabilityHook is BaseHook {
             
             // Burn 3CRV69 to return stablecoin
             threeCRV69_contract.burn(amount0_uint, token0_id, sender);
-            poolManager.settle();
-        }
+            console.log("afterSwap");
+        } else { delta_amount0 = 0; }
 
-        return (BaseHook.afterSwap.selector, 0);
+        return (BaseHook.afterSwap.selector, delta_amount0);
     }
 
     function _beforeAddLiquidity(
