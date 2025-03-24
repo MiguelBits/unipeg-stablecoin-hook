@@ -239,12 +239,14 @@ contract StabilityHookTest is Test, Fixtures {
                 HOOK_ARGS
             );
         vm.stopPrank();
-
-        console.log("its working");
         
         uint256 threeCRV69Balance = threeCRV69.balanceOf(alice);
         console.log("3crv69      balance", threeCRV69Balance);
         uint256 stableTokenBalance = stableToken.balanceOf(alice);
         console.log("stableToken balance", stableTokenBalance);
+
+        //assert
+        assertLt(threeCRV69Balance, 10); //because dust
+        assert(stableTokenBalance >= 100000000000000000000); //because slippage
     }
 }

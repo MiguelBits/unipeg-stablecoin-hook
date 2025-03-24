@@ -86,25 +86,19 @@ contract StabilityHook is BaseHook {
         bytes calldata hookData
     ) internal override returns (bytes4) {
 
-        console.log("beforeAddLiquidity");
-
         address sender = IMsgSender(_manager).msgSender();
-        console.log("sender", sender);
 
         //decode the params into address
         (uint256 token0_id) = abi.decode(hookData, (uint256));
         address token0 = threeCRV69_contract.getToken(token0_id);
-        console.log("token0", token0);
 
         uint256 token0_amount = uint256(params.liquidityDelta);
-        console.log("token0_amount", token0_amount);
         IERC20 token0Contract = IERC20(token0);
 
         //check if the token0 is the threeCRV69 contract
         if (token0 != address(0)) {
             //transfer token0 to the pool
             token0Contract.transferFrom(sender, address(this), token0_amount);
-            console.log("balance of token0", token0Contract.balanceOf(address(this)));
 
             //approve & mint 3crv69 to the user
             token0Contract.approve(address(threeCRV69_contract), token0_amount);
@@ -122,7 +116,6 @@ contract StabilityHook is BaseHook {
         BalanceDelta /*feesAccrued*/,
         bytes calldata hookData
     ) internal override returns (bytes4, BalanceDelta) {
-        console.log("afterRemoveLiquidity");
 
         // Encode operation parameters
         address sender = IMsgSender(_manager).msgSender();
