@@ -142,7 +142,7 @@ contract StabilityHook is BaseHook {
         //console.log("alice balance", token0Contract.balanceOf(0xBf0b5A4099F0bf6c8bC4252eBeC548Bae95602Ea));
 
         //New delta //toBalanceDelta
-        int128 amount0 = 0;
+        int128 amount0 = delta.amount0();
         int128 amount1 = 0;
         BalanceDelta hookDelta = toBalanceDelta(amount0, amount1);
 
