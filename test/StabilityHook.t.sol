@@ -133,8 +133,12 @@ contract StabilityHookTest is Test, Fixtures {
         // Deploy the hook to an address with the correct flags
         address flags = address(
             uint160(
-                Hooks.BEFORE_SWAP_FLAG | Hooks.AFTER_SWAP_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG
-                    | Hooks.AFTER_REMOVE_LIQUIDITY_FLAG | Hooks.AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG
+                Hooks.BEFORE_SWAP_FLAG | Hooks.AFTER_SWAP_FLAG 
+                | Hooks.BEFORE_ADD_LIQUIDITY_FLAG
+                | Hooks.AFTER_REMOVE_LIQUIDITY_FLAG 
+                | Hooks.BEFORE_SWAP_RETURNS_DELTA_FLAG 
+                | Hooks.AFTER_SWAP_RETURNS_DELTA_FLAG 
+                | Hooks.AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG 
             ) ^ (0x4444 << 144) // Namespace the hook to avoid collisions
         );
         bytes memory constructorArgs = abi.encode(manager, threeCRV69); //Add all the necessary constructor arguments from the hook
@@ -210,18 +214,6 @@ contract StabilityHookTest is Test, Fixtures {
         console.log("Weasy");
     }
 
-    function testHooks() public {
-
-        // Perform a test swap //
-        bool zeroForOne = true;
-        int256 amountSpecified = -1e18; // negative number indicates exact input swap!
-        BalanceDelta swapDelta = swap(key, zeroForOne, amountSpecified, ZERO_BYTES);
-        // ------------------- //
-
-        assertEq(int256(swapDelta.amount0()), amountSpecified);
-
-    }
-
     function testRemoveLiquidityHooks() public {
         uint256 _3crvTokenId = 2;
         bytes memory HOOK_ARGS = abi.encode(_3crvTokenId);
@@ -249,4 +241,94 @@ contract StabilityHookTest is Test, Fixtures {
         assertLt(threeCRV69Balance, 10); //because dust
         assert(stableTokenBalance >= 100000000000000000000); //because slippage
     }
+
+    function testSwapHooks_DAI_to_STABLE() public {
+        uint256 _3crvTokenId = 2;
+        bytes memory HOOK_ARGS = abi.encode(_3crvTokenId);
+
+        deal(DAI, alice, 1e18);
+
+        //store dai balance and stableToken balance
+        uint256 daiBalance = dai.balanceOf(alice);
+        uint256 stableTokenBalance = stableToken.balanceOf(alice);
+
+        swapRouter.setCurrentSender(alice);
+        vm.startPrank(alice);
+
+            //approve DAI to the hook for minting 3crv69
+            ERC20(DAI).approve(address(hook), 1e18);
+
+            // Perform a test swap //
+            bool zeroForOne = true;
+            int256 amountSpecified = -1e18; // negative number indicates exact input swap!
+            BalanceDelta swapDelta = swapRouter.swap(
+                key,
+                IPoolManager.SwapParams({
+                    zeroForOne: zeroForOne,
+                    amountSpecified: amountSpecified,
+                    sqrtPriceLimitX96: zeroForOne ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
+                }),
+                PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),
+                HOOK_ARGS
+            );
+            // ------------------- //
+        vm.stopPrank();
+
+        assertEq(int256(swapDelta.amount0()), amountSpecified);
+
+        //console log dai balance and stableToken balance
+        console.log("dai         Balance", daiBalance);
+        console.log("stableToken Balance", stableTokenBalance);
+        console.log("dai         balance", dai.balanceOf(alice));
+        console.log("stableToken balance", stableToken.balanceOf(alice));
+
+        //assert dai balance is 0 and stableToken balance is more than 0.9e18 because of slippage
+        assertEq(dai.balanceOf(alice), 0);
+        assertGt(stableToken.balanceOf(alice), 0.9e18);
+    }
+
+    function testSwapHooks_STABLE_to_DAI() public {
+        uint256 _3crvTokenId = 2;
+        bytes memory HOOK_ARGS = abi.encode(_3crvTokenId);
+
+        deal(stableToken, alice, 1e18);
+        
+        //store stableToken balance
+        uint256 stableTokenBalance = stableToken.balanceOf(alice);
+
+        swapRouter.setCurrentSender(alice);
+        vm.startPrank(alice);
+
+            // Perform a test swap //
+            bool zeroForOne = false;
+            int256 amountSpecified = 1e18; // positive number indicates exact output swap!
+            BalanceDelta swapDelta = swapRouter.swap(
+                key,
+                IPoolManager.SwapParams({
+                    zeroForOne: zeroForOne,
+                    amountSpecified: amountSpecified,
+                    sqrtPriceLimitX96: zeroForOne ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
+                }),
+                PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),
+                HOOK_ARGS
+            );
+            // ------------------- // 
+
+        vm.stopPrank();
+
+    
+        assertEq(int256(swapDelta.amount0()), amountSpecified);
+
+        //console log dai balance and stableToken balance
+        console.log("dai         Balance", daiBalance);
+        console.log("stableToken Balance", stableTokenBalance);
+        console.log("dai         balance", dai.balanceOf(alice));
+        console.log("stableToken balance", stableToken.balanceOf(alice));
+
+        //assert dai balance is more than 0.9e18 and stableToken balance is 0
+        assertGt(dai.balanceOf(alice), 0.9e18);
+        assertEq(stableToken.balanceOf(alice), 0);   
+    }
+
+    
 }
