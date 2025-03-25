@@ -37,7 +37,7 @@ Implementing Uniswap V4 hooks with a stablecoin offers stability, yield generati
 ### Components
 
 1. **UNIPEG Token**  
-   - ERC-20 token representing UNI PEG.
+   - ERC-20 token representing UNIPEG.
    - Minted and burned via hooks in the Leverage Pool, with supply controlled by collateral and stability mechanisms.
 
 2. **Treasury**  
