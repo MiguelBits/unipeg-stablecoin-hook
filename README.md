@@ -71,7 +71,7 @@ UNIPEG maintains its $1 peg through a multi-layered approach:
 ## Yield Generation
 
 - **Trading Pools Fees**: Trading fees (e.g., 0.05%) are collected and either redistributed to liquidity providers or sent to the Treasury for peg maintenance.
-- **Lending Interest**: Users borrowing UNIPEG from the Leverage Pool pay interest, which can be distributed to collateral providers or used to enhance system stability.
+- ~~**Lending Interest**: Users borrowing UNIPEG from the Leverage Pool pay interest, which can be distributed to collateral providers or used to enhance system stability.~~
 - **Strategy Deployment** *(Enhancement)*  
    - Treasury funds can be deployed into yield-generating strategies (e.g., lending on Aave or staking), with profits used to bolster UNIP’s peg or reward holders.
 
