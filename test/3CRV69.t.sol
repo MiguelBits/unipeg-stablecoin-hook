@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import {ThreeCRV69} from "../src/3CRV69.sol";
-import {ERC20Mock} from "./utils/ERC20Mock.sol";
+import {ERC20Mock} from "./utils/mocks/ERC20Mock.sol";
 
 contract ThreeCRV69Test is Test {
 
